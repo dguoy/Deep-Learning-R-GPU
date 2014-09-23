@@ -4,7 +4,7 @@ initializeParameters <- function(hiddenSize, visibleSize) {
 	b1 <- rep(0, hiddenSize)
 	W2 <- runif(visibleSize * hiddenSize) * 2 * r - r
 	b2 <- rep(0, visibleSize)
-	c(W1, W2, b1, b2)
+	c(W1, b1, W2, b2)
 }
 sigmoid <- function(z) 1 / (1 + exp(-z))
 feedForwardAutoencoder <- function(theta, hiddenSize, visibleSize, data) {
