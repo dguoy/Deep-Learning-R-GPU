@@ -7,7 +7,7 @@ sparsityParam <- 0.1
 lambda <- 3e-3
 beta <- 3
 
-trainData <- loadImageFile('data/train-images-idx3-ubyte')$x
+trainData <- loadImageFile('data/train-images-idx3-ubyte')
 trainLabels <- loadLabelFile('data/train-labels-idx1-ubyte')
 
 sae1Theta <- initializeParameters(hiddenSizeL1, inputSize)
@@ -43,7 +43,7 @@ stackedAEOptTheta <- optim(stackedAETheta,
                            method = "L-BFGS-B", control = list(trace = 3, maxit = 400))$par
 
 
-testData <- loadImageFile('data/t10k-images-idx3-ubyte')$x
+testData <- loadImageFile('data/t10k-images-idx3-ubyte')
 testLabels <- loadLabelFile('data/t10k-labels-idx1-ubyte')
 
 predict <- stackedAEPredict(stackedAETheta, inputSize, hiddenSizeL2, numClasses, testData)

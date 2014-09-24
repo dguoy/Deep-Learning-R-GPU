@@ -3,16 +3,19 @@ numClasses <- 10
 
 lambda <- 1e-4
 
-images <- train$x
-labels <- train$y
+trainData <- loadImageFile('data/train-images-idx3-ubyte')
+trainLabels <- loadLabelFile('data/train-labels-idx1-ubyte')
 
 theta <- 0.005 * runif(numClasses * inputSize)
 
 optimTheta <- optim(theta,
-		function(theta) softmaxCost(theta, numClasses, inputSize, lambda, images, labels),
-		function(theta) softmaxGrad(theta, numClasses, inputSize, lambda, images, labels),
-		method = "L-BFGS-B", control = list(trace = 3, maxit = 100))$par
-softmaxPredict(optimTheta, test$x, test$y)
+		function(theta) softmaxCost(theta, numClasses, inputSize, lambda, trainData, trainLabels),
+		function(theta) softmaxGrad(theta, numClasses, inputSize, lambda, trainData, trainLabels),
+		method = "L-BFGS-B", control = list(trace = 3, maxit = 500))$par
+
+testData <- loadImageFile('data/t10k-images-idx3-ubyte')
+testLabels <- loadLabelFile('data/t10k-labels-idx1-ubyte')
+softmaxPredict(optimTheta, testData, testLabels)
 
 #************************************************ Function *******************************************************
 softmaxCost <- function(theta, numClasses, inputSize, lambda, data, labels) {

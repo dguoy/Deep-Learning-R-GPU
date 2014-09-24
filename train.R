@@ -22,23 +22,6 @@ W <- matrix(optimTheta[1 : (hiddenSize*visibleSize)], hiddenSize, visibleSize)
 displayNetwork(W)
 
 #******************************************* function *********************************************************
-sampleImages <- function(images) {
-	patchsize <- 8
-	numpatches <- 10000
-	patches <- matrix(0, nrow=patchsize^2, ncol=numpatches)
-	for(i in 1:numpatches) {
-		x <- sample(1:(512-patchsize+1), size=1)
-		y <- sample(1:(512-patchsize+1), size=1)
-		z <- sample(1:10, size=1)
-		patches[, i] <- as.vector(images[x:(x+patchsize-1), y:(y+patchsize-1), z])
-	}
-	patches <- patches - mean(patches)
-	pstd <- 3 * sd(patches)
-	patches[patches > pstd] <- pstd
-	patches[patches < -pstd] <- -pstd
-	patches <- (patches / pstd + 1) * 0.4 + 0.1
-	patches
-}
 sparseAutoencoderCost <- function(theta, visibleSize, hiddenSize, lambda, sparsityParam, beta, data) {
 	W1 = matrix(theta[1 : (hiddenSize*visibleSize)], hiddenSize, visibleSize)
 	b1 = theta[(hiddenSize*visibleSize+1) : (hiddenSize*visibleSize+hiddenSize)]
@@ -91,5 +74,4 @@ sparseAutoencoderGrad <- function(theta, visibleSize, hiddenSize, lambda, sparsi
 
 	c(as.vector(W1grad), as.vector(b1grad), as.vector(W2grad), as.vector(b2grad))
 }
-
 

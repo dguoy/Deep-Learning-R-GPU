@@ -17,6 +17,24 @@ feedForwardAutoencoder <- function(theta, hiddenSize, visibleSize, data) {
 sampleImages <- function(images, patchsize=8, numpatches=100000) {
 	imageRowDim <- dim(images)[1]
 	imageColDim <- dim(images)[2]
+	numImages <- dim(images)[3]
+	patches <- matrix(0, nrow=patchsize^2, ncol=numpatches)
+	for(i in 1:numpatches) {
+		x <- sample(1:(imageRowDim-patchsize+1), size=1)
+		y <- sample(1:(imageColDim-patchsize+1), size=1)
+		z <- sample(1:numImages, size=1)
+		patches[, i] <- as.vector(images[x:(x+patchsize-1), y:(y+patchsize-1), z])
+	}
+	patches <- patches - mean(patches)
+	pstd <- 3 * sd(patches)
+	patches[patches > pstd] <- pstd
+	patches[patches < -pstd] <- -pstd
+	patches <- (patches / pstd + 1) * 0.4 + 0.1
+	patches
+}
+sampleColorImages <- function(images, patchsize=8, numpatches=100000) {
+	imageRowDim <- dim(images)[1]
+	imageColDim <- dim(images)[2]
 	imageChannels <- dim(images)[3]
 	numImages <- dim(images)[4]
 	patches <- matrix(0, nrow=patchsize^2 * imageChannels, ncol=numpatches)

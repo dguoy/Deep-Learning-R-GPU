@@ -1,12 +1,11 @@
 loadImageFile <- function(filename) {
-	ret = list()
 	f = file(filename,'rb')
 	readBin(f,'integer',n=1,size=4,endian='big')
-	ret$n = readBin(f,'integer',n=1,size=4,endian='big')
+	n = readBin(f,'integer',n=1,size=4,endian='big')
 	nrow = readBin(f,'integer',n=1,size=4,endian='big')
 	ncol = readBin(f,'integer',n=1,size=4,endian='big')
-	x = readBin(f,'integer',n=ret$n*nrow*ncol,size=1,signed=F)
-	ret$x = matrix(x, nrow=nrow*ncol) / 255
+	x = readBin(f,'integer',n=n*nrow*ncol,size=1,signed=F)
+	ret = matrix(x, nrow=nrow*ncol) / 255
 	close(f)
 	ret
 }

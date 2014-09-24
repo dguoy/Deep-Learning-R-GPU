@@ -6,14 +6,14 @@ lambda <- 3e-3
 beta <- 3
 maxIter <- 400
 
-mnistData <- train$x
-mnistLabels <- train$y
+mnistData <- loadImageFile('data/train-images-idx3-ubyte')
+mnistLabels <- loadLabelFile('data/train-labels-idx1-ubyte')
 mnistLabels[mnistLabels == 10] <- 0
 
-unlabeledSet <- mnistLabels >= 5
+unlabeledSet <- which(mnistLabels >= 5)
 unlabeledData <- mnistData[, unlabeledSet]
 
-labeledSet <- mnistLabels >= 0 & mnistLabels <= 4
+labeledSet <- which(mnistLabels >= 0 & mnistLabels <= 4)
 numTrain <- round(length(labeledSet)/2)
 
 trainSet <- labeledSet[1 : numTrain]
@@ -27,23 +27,9 @@ testLabels <- mnistLabels[testSet] + 1
 theta <- initializeParameters(hiddenSize, inputSize)
 
 optimTheta <- optim(theta,
-		function(theta) J(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData),
-		function(theta) g(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData),
-		method = "L-BFGS-B", control = list(trace = 3, maxit = 400))$par
+		function(theta) sparseAutoencoderCost(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData),
+		function(theta) sparseAutoencoderGrad(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData),
+		method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
 
 trainFeatures <- feedForwardAutoencoder(optimTheta, hiddenSize, inputSize, trainData)
 testFeatures <- feedForwardAutoencoder(optimTheta, hiddenSize, inputSize, testData)
-
-#*************************************************** Function **********************************************************************
-
-fr <- function(theta) J(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData)
-grr <- function(theta) g(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData)
-
-feedForwardAutoencoder <- function(theta, hiddenSize, visibleSize, data) {
-	W1 <- matrix(theta[1:(hiddenSize*visibleSize)], hiddenSize, visibleSize)
-	b1 <- theta[(2*hiddenSize*visibleSize+1) : (2*hiddenSize*visibleSize+hiddenSize)]
-
-	z2 <- W1 %*% data + b1
-	a2 <- sigmoid(z2)
-	a2
-}
