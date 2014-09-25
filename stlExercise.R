@@ -4,7 +4,7 @@ hiddenSize <- 200
 sparsityParam <- 0.1
 lambda <- 3e-3
 beta <- 3
-maxIter <- 400
+maxIter <- 500
 
 mnistData <- loadImageFile('data/train-images-idx3-ubyte')
 mnistLabels <- loadLabelFile('data/train-labels-idx1-ubyte')
@@ -20,16 +20,30 @@ trainSet <- labeledSet[1 : numTrain]
 trainData <- mnistData[, trainSet]
 trainLabels <- mnistLabels[trainSet] + 1
 
-testSet <- labeledSet[numTrain+1 : length(labeledSet)]
+testSet <- labeledSet[(numTrain+1) : length(labeledSet)]
 testData <- mnistData[, testSet]
 testLabels <- mnistLabels[testSet] + 1
 
-theta <- initializeParameters(hiddenSize, inputSize)
+stlTheta <- initializeParameters(hiddenSize, inputSize)
+stlOptTheta <- optim(stlTheta,
+                		function(theta) sparseAutoencoderCost(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData),
+                		function(theta) sparseAutoencoderGrad(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData),
+                		method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
 
-optimTheta <- optim(theta,
-		function(theta) sparseAutoencoderCost(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData),
-		function(theta) sparseAutoencoderGrad(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData),
-		method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
+trainFeatures <- feedForwardAutoencoder(stlOptTheta, hiddenSize, inputSize, trainData)
+testFeatures <- feedForwardAutoencoder(stlOptTheta, hiddenSize, inputSize, testData)
 
-trainFeatures <- feedForwardAutoencoder(optimTheta, hiddenSize, inputSize, trainData)
-testFeatures <- feedForwardAutoencoder(optimTheta, hiddenSize, inputSize, testData)
+softmaxLambda <- 1e-4
+softmaxTheta <- 0.005 * runif(numLabels * hiddenSize)
+softmaxOptTheta <- optim(softmaxTheta,
+                        function(theta) softmaxCost(theta, numLabels, hiddenSize, softmaxLambda, trainFeatures, trainLabels),
+                        function(theta) softmaxGrad(theta, numLabels, hiddenSize, softmaxLambda, trainFeatures, trainLabels),
+                        method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
+
+softmaxPredict(softmaxOptTheta, testFeatures, testLabels)
+softmaxPredict(softmaxOptTheta, trainFeatures, trainLabels)
+
+
+
+
+
