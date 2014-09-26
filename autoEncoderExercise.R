@@ -37,16 +37,16 @@ sparseAutoencoderCost <- function(theta, visibleSize, hiddenSize, lambda, sparsi
 	a3 <- sigmoid(z3)
 
 	rho <- rowSums(a2) / m
-	
+
 	(1 /  (2 * m)) * sum((a3 - y)^2) +
 		(lambda / 2) * (sum(W1^2) + sum(W2^2)) +
 			beta * sum(sparsityParam * log(sparsityParam / rho) + (1 - sparsityParam) * log((1 - sparsityParam) / (1-rho)))
 }
 sparseAutoencoderGrad <- function(theta, visibleSize, hiddenSize, lambda, sparsityParam, beta, data) {
-  W1 = matrix(theta[1 : (hiddenSize*visibleSize)], hiddenSize, visibleSize)
-  b1 = theta[(hiddenSize*visibleSize+1) : (hiddenSize*visibleSize+hiddenSize)]
-  W2 = matrix(theta[(hiddenSize*visibleSize+hiddenSize+1) : (2*hiddenSize*visibleSize+hiddenSize)], visibleSize, hiddenSize)
-  b2 = theta[(2*hiddenSize*visibleSize+hiddenSize+1) : length(theta)]
+	W1 = matrix(theta[1 : (hiddenSize*visibleSize)], hiddenSize, visibleSize)
+	b1 = theta[(hiddenSize*visibleSize+1) : (hiddenSize*visibleSize+hiddenSize)]
+	W2 = matrix(theta[(hiddenSize*visibleSize+hiddenSize+1) : (2*hiddenSize*visibleSize+hiddenSize)], visibleSize, hiddenSize)
+	b2 = theta[(2*hiddenSize*visibleSize+hiddenSize+1) : length(theta)]
 
 	m <- ncol(data)
 	y <- data
