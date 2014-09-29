@@ -20,7 +20,7 @@ epsilon <- 0.1
 
 poolDim <- 19
 
-stlTrainSubset <- readMat("/Users/jp61130/Documents/workspace/Exercise/data/stlTrainSubset.mat")
+stlTrainSubset <- readMat("data/stlTrainSubset.mat")
 imageDim <- dim(stlTrainSubset$trainImages)[1]
 
 W <- matrix(optTheta[1:(visibleSize * hiddenSize)], hiddenSize, visibleSize)
