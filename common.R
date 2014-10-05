@@ -88,6 +88,7 @@ displayColorNetwork <- function(A) {
 			geom_tile() +
 			scale_fill_identity()
 }
+up2Down <- function(A) A[,ncol(A):1]
 displayNetwork <- function(A) {
   if(min(A) <= 0) {
     A <- A - min(A)
@@ -101,7 +102,7 @@ displayNetwork <- function(A) {
   for(i in 0:(rows-1)) {
     for(j in 0:(cols-1)) {
       I[(i*dimp+1):(i*dimp+dim), (j*dimp+1):(j*dimp+dim)] <- 
-        matrix(A[i*cols+j+1, ] / sqrt(sum(A[i*cols+j+1, ]^2)), dim, dim)
+        up2Down(matrix(A[i*cols+j+1, ] / sqrt(sum(A[i*cols+j+1, ]^2)), dim, dim))
     }
   }
 

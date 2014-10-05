@@ -2,7 +2,7 @@ library(R.matlab)
 library(reshape2)
 library(ggplot2)
 
-hiddenSize <- 400
+hiddenSize <- 200
 batchSize <- 100
 alpha <- 1
 
@@ -27,13 +27,13 @@ for(l in 1:10) {
 		h2 <- sigmoidRnd(W %*% v2 + c)
 		c1 <- h1 %*% t(v1)
 		c2 <- h2 %*% t(v2)
-	
-		W <- W + alpha * (c1 - c2) / batchSize
+
+    W <- W + alpha * (c1 - c2) / batchSize
 		b <- b + alpha * rowMeans(v1 - v2)
 		c <- c + alpha * rowMeans(h1 - h2)
 		err <- err + sum((v1 - v2)^2) / batchSize
 	}
-	print(err)
+	print(sprintf("At iterate %s = %s", l, err))
 }
 displayNetwork(W)
 
