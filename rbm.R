@@ -6,10 +6,10 @@ hiddenSize <- 200
 batchSize <- 100
 alpha <- 1
 
-x <- loadImageFile('data/train-images-idx3-ubyte')
+trainData <- loadImageFile('data/train-images-idx3-ubyte')
 
-m <- ncol(x)
-inputSize <- nrow(x)
+m <- ncol(trainData)
+inputSize <- nrow(trainData)
 numbatches <- m / batchSize
 
 r <- sqrt(6) / sqrt(hiddenSize+inputSize+1)
@@ -17,29 +17,29 @@ W <- matrix(runif(hiddenSize * inputSize) * 2 * r - r, ncol = inputSize, nrow = 
 b <- rep(0, inputSize)
 c <- rep(0, hiddenSize)
 
-for(l in 1:10) {
+for(l in 1:20) {
 	kk <- sample(1:m)
 	err <- 0
 	for(i in 1:numbatches) {
-		v1 <- x[, kk[((i - 1)*batchSize+1) : (i*batchSize)]]
+		v1 <- trainData[, kk[((i - 1)*batchSize+1) : (i*batchSize)]]
 		h1 <- sigmoidRnd(W %*% v1 + c)
 		v2 <- sigmoidRnd(t(W) %*% h1 + b)
 		h2 <- sigmoidRnd(W %*% v2 + c)
 		c1 <- h1 %*% t(v1)
 		c2 <- h2 %*% t(v2)
 
-    W <- W + alpha * (c1 - c2) / batchSize
-		b <- b + alpha * rowMeans(v1 - v2)
-		c <- c + alpha * rowMeans(h1 - h2)
+		W <- W + (alpha / l) * (c1 - c2) / batchSize
+		b <- b + (alpha / l) * rowMeans(v1 - v2)
+		c <- c + (alpha / l) * rowMeans(h1 - h2)
 		err <- err + sum((v1 - v2)^2) / batchSize
 	}
 	print(sprintf("At iterate %s = %s", l, err))
 }
 displayNetwork(W)
 
-numLabels <- 10
 trainData <- loadImageFile('data/train-images-idx3-ubyte')
 trainLabels <- loadLabelFile('data/train-labels-idx1-ubyte')
+numLabels <- length(table(trainLabels))
 testData <- loadImageFile('data/t10k-images-idx3-ubyte')
 testLabels <- loadLabelFile('data/t10k-labels-idx1-ubyte')
 
@@ -56,7 +56,4 @@ softmaxOptTheta <- optim(softmaxTheta,
 softmaxPredict(softmaxOptTheta, testFeatures, testLabels)
 softmaxPredict(softmaxOptTheta, trainFeatures, trainLabels)
 
-#********************************************* Function **********************************************
-sigmoidRnd <- function(z) {
-	ifelse(sigmoid(z) > matrix(runif(length(z)), nrow = nrow(z), ncol = ncol(z)), 1, 0)
-}
+
