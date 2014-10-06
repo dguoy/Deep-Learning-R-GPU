@@ -122,8 +122,7 @@ checkNumericalGradient <- function(theta, f, g) {
 		e[i] <- epsilon
 		gradient[i] <- (f(theta + e) - f(theta - e)) / (2 * epsilon)
 		if(abs(gradient[i] - actualGrad[i]) > 1e-9) {
-		  print(i)
-			print(abs(gradient[i] - actualGrad[i]))
+		  print(sprintf("%s = %s", i, abs(gradient[i] - actualGrad[i])))
 		}
 	}
 	sum(abs(gradient - actualGrad))
