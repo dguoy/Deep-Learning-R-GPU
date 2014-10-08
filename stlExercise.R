@@ -1,3 +1,5 @@
+# Self-Taught Learning
+
 inputSize <- 28 * 28
 numLabels <- 5
 hiddenSize <- 200

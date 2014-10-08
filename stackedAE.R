@@ -1,3 +1,4 @@
+#Stacked Autoencoders
 
 inputSize <- 28 * 28
 numClasses <- 10

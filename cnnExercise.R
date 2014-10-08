@@ -1,4 +1,5 @@
-#cnn
+# Convolution and Pooling
+
 library(R.matlab)
 library(ggplot2)
 library(reshape)

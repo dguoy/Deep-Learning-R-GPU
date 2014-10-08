@@ -1,3 +1,5 @@
+# Linear Decoders with Autoencoders
+
 library(R.matlab)
 library(reshape2)
 library(ggplot2)
