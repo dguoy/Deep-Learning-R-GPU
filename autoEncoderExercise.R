@@ -1,5 +1,6 @@
 # Sparse Autoencoder
 
+source('common.R')
 library(R.matlab)
 library(reshape2)
 library(ggplot2)

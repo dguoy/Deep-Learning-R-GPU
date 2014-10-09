@@ -1,5 +1,6 @@
 #Stacked Autoencoders
 
+source('common.R')
 inputSize <- 28 * 28
 numClasses <- 10
 hiddenSizeL1 <- 200

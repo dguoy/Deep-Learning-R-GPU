@@ -1,5 +1,6 @@
 # Restricted Boltzmann Machines
 
+source('common.R')
 library(R.matlab)
 library(reshape2)
 library(ggplot2)
@@ -57,5 +58,3 @@ softmaxOptTheta <- optim(softmaxTheta,
 
 softmaxPredict(softmaxOptTheta, testFeatures, testLabels)
 softmaxPredict(softmaxOptTheta, trainFeatures, trainLabels)
-
-

@@ -1,5 +1,6 @@
 # Self-Taught Learning
 
+source('common.R')
 inputSize <- 28 * 28
 numLabels <- 5
 hiddenSize <- 200
