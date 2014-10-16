@@ -30,44 +30,42 @@ SEXP gpuMatMult(SEXP a, SEXP b) {
     cudaError_t cudaStat;
 
     cudaStat = cudaMalloc((void**) &gpua, rowsa * colsa * sizeof(double));
-    if (cudaStat != cudaSuccess) error("device memory allocation failed");
+    if (cudaStat != cudaSuccess) error("gpua device memory allocation failed");
 
     cudaStat = cudaMalloc((void**) &gpub, rowsb * colsb * sizeof(double));
-    if (cudaStat != cudaSuccess) error("device memory allocation failed");
+    if (cudaStat != cudaSuccess) error("gpub device memory allocation failed");
 
     int
         rowsOpA = rowsa, colsOpA = colsa, colsOpB = colsb;
 
     cudaStat = cudaMalloc((void**) &gpuc, rowsOpA * colsOpB * sizeof(double));
-    if (cudaStat != cudaSuccess) error("device memory allocation failed");
+    if (cudaStat != cudaSuccess) error("gpuc device memory allocation failed");
 
     stat = cublasCreate(&handle);
     if(stat != CUBLAS_STATUS_SUCCESS) error("CUBLAS initialization failed\n");
 
-    stat = cublasSetMatrix(rowsa, colsa, sizeof(double), xa, rowsa,
-        gpua, rowsa);
+    stat = cublasSetMatrix(rowsa, colsa, sizeof(double), xa, rowsa, gpua, rowsa);
     if(stat != CUBLAS_STATUS_SUCCESS) {
         cudaFree(gpuc);
-    cudaFree(gpub);
-    cudaFree(gpua);
-    cublasDestroy(handle);
-    error("data download failed\n");
+        cudaFree(gpub);
+        cudaFree(gpua);
+        cublasDestroy(handle);
+        error("gpua data download failed\n");
     }
 
-    stat = cublasSetMatrix(rowsb, colsb, sizeof(double), xb, rowsb,
-        gpub, rowsb);
+    stat = cublasSetMatrix(rowsb, colsb, sizeof(double), xb, rowsb, gpub, rowsb);
     if(stat != CUBLAS_STATUS_SUCCESS) {
         cudaFree(gpuc);
-    cudaFree(gpub);
-    cudaFree(gpua);
-    cublasDestroy(handle);
-    error("data download failed\n");
+        cudaFree(gpub);
+        cudaFree(gpua);
+        cublasDestroy(handle);
+        error("gpub data download failed\n");
     }
 
     const double alpha = 1.0, beta = 0.0;
     cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, rowsOpA, colsOpB, colsOpA,
-        &alpha, (const double *) gpua, rowsa, (const double *) gpub, rowsb,
-    &beta, gpuc, rowsOpA);
+                &alpha, (const double *) gpua, rowsa, (const double *) gpub, rowsb,
+                &beta, gpuc, rowsOpA);
 
     SEXP ab, dimab;
     PROTECT(ab = allocVector(REALSXP, rowsOpA * colsOpB));
@@ -76,14 +74,13 @@ SEXP gpuMatMult(SEXP a, SEXP b) {
     setAttrib(ab, R_DimSymbol, dimab);
 
     double * xab = REAL(ab);
-    stat = cublasGetMatrix(rowsOpA, colsOpB, sizeof(double), gpuc, rowsOpA,
-        xab, rowsOpA);
+    stat = cublasGetMatrix(rowsOpA, colsOpB, sizeof(double), gpuc, rowsOpA, xab, rowsOpA);
     if(stat != CUBLAS_STATUS_SUCCESS) {
         cudaFree(gpuc);
         cudaFree(gpub);
-    cudaFree(gpua);
-    cublasDestroy(handle);
-    error("data upload failed\n");
+        cudaFree(gpua);
+        cublasDestroy(handle);
+        error("gpuc data upload failed\n");
     }
 
     cudaFree(gpua);
