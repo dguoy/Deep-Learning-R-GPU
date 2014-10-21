@@ -1,3 +1,8 @@
+library(R.matlab)
+library(reshape2)
+library(ggplot2)
+library(R6)
+
 initializeParameters <- function(hiddenSize, visibleSize) {
 	r <- sqrt(6) / sqrt(hiddenSize+visibleSize+1)
 	W1 <- runif(hiddenSize * visibleSize) * 2 * r - r
