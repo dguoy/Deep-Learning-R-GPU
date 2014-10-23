@@ -1,6 +1,8 @@
 # Self-Taught Learning
-
 source('common.R')
+source('deepLearning.R')
+source('softmax.R')
+
 inputSize <- 28 * 28
 numLabels <- 5
 hiddenSize <- 200
@@ -29,9 +31,9 @@ testLabels <- mnistLabels[testSet] + 1
 
 stlTheta <- initializeParameters(hiddenSize, inputSize)
 stlOptTheta <- optim(stlTheta,
-                		function(theta) sparseAutoencoderCost(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData),
-                		function(theta) sparseAutoencoderGrad(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData),
-                		method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
+						function(theta) sparseAutoencoderCost(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData),
+						function(theta) sparseAutoencoderGrad(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData),
+						method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
 
 trainFeatures <- feedForwardAutoencoder(stlOptTheta, hiddenSize, inputSize, trainData)
 testFeatures <- feedForwardAutoencoder(stlOptTheta, hiddenSize, inputSize, testData)
@@ -39,14 +41,9 @@ testFeatures <- feedForwardAutoencoder(stlOptTheta, hiddenSize, inputSize, testD
 softmaxLambda <- 1e-4
 softmaxTheta <- 0.005 * runif(numLabels * hiddenSize)
 softmaxOptTheta <- optim(softmaxTheta,
-                        function(theta) softmaxCost(theta, numLabels, hiddenSize, softmaxLambda, trainFeatures, trainLabels),
-                        function(theta) softmaxGrad(theta, numLabels, hiddenSize, softmaxLambda, trainFeatures, trainLabels),
-                        method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
+							function(theta) softmaxCost(theta, numLabels, hiddenSize, softmaxLambda, trainFeatures, trainLabels),
+							function(theta) softmaxGrad(theta, numLabels, hiddenSize, softmaxLambda, trainFeatures, trainLabels),
+							method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
 
 softmaxPredict(softmaxOptTheta, testFeatures, testLabels)
 softmaxPredict(softmaxOptTheta, trainFeatures, trainLabels)
-
-
-
-
-

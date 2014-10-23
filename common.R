@@ -1,7 +1,6 @@
 library(R.matlab)
 library(reshape2)
 library(ggplot2)
-library(R6)
 
 initializeParameters <- function(hiddenSize, visibleSize) {
 	r <- sqrt(6) / sqrt(hiddenSize+visibleSize+1)
@@ -98,25 +97,25 @@ displayColorNetwork <- function(A) {
 }
 up2Down <- function(A) A[,ncol(A):1]
 displayNetwork <- function(A) {
-  if(min(A) <= 0) {
-    A <- A - min(A)
-  }
-  cols = round(sqrt(nrow(A)))
-  rows <- ceiling(nrow(A) / cols)
-  dim <- sqrt(ncol(A))
-  dimp <- dim + 1
-  I <- matrix(0, dim*rows+rows-1, dim*cols+cols-1)
-
-  for(i in 0:(rows-1)) {
-    for(j in 0:(cols-1)) {
-      I[(i*dimp+1):(i*dimp+dim), (j*dimp+1):(j*dimp+dim)] <- 
-        up2Down(matrix(A[i*cols+j+1, ] / sqrt(sum(A[i*cols+j+1, ]^2)), dim, dim))
-    }
-  }
-
-  ggplot(melt(I), aes(Var1, Var2, fill=value)) +
-    geom_tile() +
-    scale_fill_gradient(low="#FFFFFF", high="#000000")
+	if(min(A) <= 0) {
+		A <- A - min(A)
+	}
+	cols = round(sqrt(nrow(A)))
+	rows <- ceiling(nrow(A) / cols)
+	dim <- sqrt(ncol(A))
+	dimp <- dim + 1
+	I <- matrix(0, dim*rows+rows-1, dim*cols+cols-1)
+	
+	for(i in 0:(rows-1)) {
+		for(j in 0:(cols-1)) {
+			I[(i*dimp+1):(i*dimp+dim), (j*dimp+1):(j*dimp+dim)] <- 
+					up2Down(matrix(A[i*cols+j+1, ] / sqrt(sum(A[i*cols+j+1, ]^2)), dim, dim))
+		}
+	}
+	
+	ggplot(melt(I), aes(Var1, Var2, fill=value)) +
+		geom_tile() +
+			scale_fill_gradient(low="#FFFFFF", high="#000000")
 }
 checkNumericalGradient <- function(theta, f, g) {
 	actualGrad <- g(theta)
@@ -133,23 +132,23 @@ checkNumericalGradient <- function(theta, f, g) {
 	sum(abs(gradient - actualGrad))
 }
 loadImageFile <- function(filename) {
-  f = file(filename,'rb')
-  readBin(f,'integer',n=1,size=4,endian='big')
-  n = readBin(f,'integer',n=1,size=4,endian='big')
-  nrow = readBin(f,'integer',n=1,size=4,endian='big')
-  ncol = readBin(f,'integer',n=1,size=4,endian='big')
-  x = readBin(f,'integer',n=n*nrow*ncol,size=1,signed=F)
-  ret = matrix(x, nrow=nrow*ncol) / 255
-  close(f)
-  ret
+	f = file(filename,'rb')
+	readBin(f,'integer',n=1,size=4,endian='big')
+	n = readBin(f,'integer',n=1,size=4,endian='big')
+	nrow = readBin(f,'integer',n=1,size=4,endian='big')
+	ncol = readBin(f,'integer',n=1,size=4,endian='big')
+	x = readBin(f,'integer',n=n*nrow*ncol,size=1,signed=F)
+	ret = matrix(x, nrow=nrow*ncol) / 255
+	close(f)
+	ret
 }
 loadLabelFile <- function(filename) {
-  f = file(filename,'rb')
-  readBin(f,'integer',n=1,size=4,endian='big')
-  n = readBin(f,'integer',n=1,size=4,endian='big')
-  y = readBin(f,'integer',n=n,size=1,signed=F)
-  close(f)
-  y[y == 0] <- 10
-  y
+	f = file(filename,'rb')
+	readBin(f,'integer',n=1,size=4,endian='big')
+	n = readBin(f,'integer',n=1,size=4,endian='big')
+	y = readBin(f,'integer',n=n,size=1,signed=F)
+	close(f)
+	y[y == 0] <- 10
+	y
 }
 
