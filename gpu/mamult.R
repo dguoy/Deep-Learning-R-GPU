@@ -11,13 +11,18 @@ dyn.load("gpu/matmult.so")
 		a2 <- a[,(maxDim+1):ncol(a)]
 		b1 <- b[1:maxDim,]
 		b2 <- b[(maxDim+1):nrow(b),]
-		ab <- .Call("gpuMatMult", a1, b1)
-		ab <- ab + .Call("gpuMatMult", a2, b2)
+		ab <- a1 %**% b1
+		ab <- ab + a2 %**% b2
 	} else if(ncol(b) > maxDim) {
 		b1 <- b[,1:maxDim]
 		b2 <- b[,(maxDim+1):ncol(b)]
-		ab <- .Call("gpuMatMult", a, b1)
-		ab <- cbind(ab, .Call("gpuMatMult", a, b2))
+		ab <- a %**% b1
+		ab <- cbind(ab, a %**% b2)
+	} else if(nrow(a) > maxDim) {
+		a1 <- a[1:maxDim,]
+		a2 <- a[(maxDim+1):nrow(b),]
+		ab <- a1 %**% b
+		ab <- rbind(ab, a2 %**% b)
 	} else {
 		ab <- .Call("gpuMatMult", a, b)
 	}

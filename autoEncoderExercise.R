@@ -1,6 +1,6 @@
 # Sparse Autoencoder
-source('common.R')
-source('deepLearning.R')
+source('deeplearning/common.R')
+source('deeplearning/sparseAutoencoder.R')
 
 images <- readMat("data/IMAGES.mat")[[1]]
 
@@ -12,6 +12,7 @@ beta <- 3
 
 patches <- sampleImages(images)
 theta <- initializeParameters(hiddenSize, visibleSize)
+#************************************************ With method ***************************************************************************************
 
 optimTheta <- optim(theta,
 		function(theta) sparseAutoencoderCost(theta, visibleSize, hiddenSize, lambda, sparsityParam, beta, patches),
@@ -23,3 +24,6 @@ displayNetwork(W)
 #************************************************ With Object-oriented ******************************************************************************
 sparseAutoencoder <- SparseAutoencoder$new(visibleSize, hiddenSize, lambda, sparsityParam, beta, patches)
 optimTheta <- optim(theta, sparseAutoencoder$cost, sparseAutoencoder$grad, method = "L-BFGS-B", control = list(trace = 3, maxit = 2000))$par
+
+W <- matrix(optimTheta[1 : (hiddenSize*visibleSize)], hiddenSize, visibleSize)
+displayNetwork(W)

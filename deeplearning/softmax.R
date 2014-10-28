@@ -61,9 +61,9 @@ Softmax <- R6Class("Softmax",
 		},
 		cost = function(theta) {
 			theta <- matrix(theta, private$numClasses, private$inputSize)
-			
+
 			private$numCases <- ncol(private$data)
-			
+
 			private$groundTruth <- matrix(0, private$numClasses, private$numCases)
 			for(i in 1:length(private$labels)) {
 				private$groundTruth[private$labels[i], i] <- 1

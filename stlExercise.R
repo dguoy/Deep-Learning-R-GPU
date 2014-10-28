@@ -1,7 +1,7 @@
 # Self-Taught Learning
-source('common.R')
-source('deepLearning.R')
-source('softmax.R')
+source('deeplearning/common.R')
+source('deeplearning/sparseAutoencoder.R')
+source('deeplearning/softmax.R')
 
 inputSize <- 28 * 28
 numLabels <- 5
@@ -30,6 +30,8 @@ testData <- mnistData[, testSet]
 testLabels <- mnistLabels[testSet] + 1
 
 stlTheta <- initializeParameters(hiddenSize, inputSize)
+#************************************************ With method ***************************************************************************************
+
 stlOptTheta <- optim(stlTheta,
 						function(theta) sparseAutoencoderCost(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData),
 						function(theta) sparseAutoencoderGrad(theta, inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData),
@@ -47,3 +49,18 @@ softmaxOptTheta <- optim(softmaxTheta,
 
 softmaxPredict(softmaxOptTheta, testFeatures, testLabels)
 softmaxPredict(softmaxOptTheta, trainFeatures, trainLabels)
+
+#************************************************ With Object-oriented ******************************************************************************
+sparseAutoencoder <- SparseAutoencoder$new(inputSize, hiddenSize, lambda, sparsityParam, beta, unlabeledData)
+stlOptTheta <- optim(stlTheta, sparseAutoencoder$cost, sparseAutoencoder$grad, method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
+
+trainFeatures <- feedForwardAutoencoder(stlOptTheta, hiddenSize, inputSize, trainData)
+testFeatures <- feedForwardAutoencoder(stlOptTheta, hiddenSize, inputSize, testData)
+
+softmaxLambda <- 1e-4
+softmaxTheta <- 0.005 * runif(numLabels * hiddenSize)
+
+softmax <- Softmax$new(numLabels, hiddenSize, softmaxLambda, trainFeatures, trainLabels)
+softmaxOptTheta <- optim(softmaxTheta, softmax$cost, softmax$grad, method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
+softmax$predict(softmaxOptTheta, testFeatures, testLabels)
+softmax$predict(softmaxOptTheta, trainFeatures, trainLabels)

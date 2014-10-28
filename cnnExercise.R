@@ -1,5 +1,5 @@
 # Convolution and Pooling
-source('common.R')
+source('deeplearning/common.R')
 source('deepLearning.R')
 source('softmax.R')
 

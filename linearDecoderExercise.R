@@ -1,5 +1,5 @@
 # Linear Decoders with Autoencoders
-source('common.R')
+source('deeplearning/common.R')
 source('deeplearning/sparseAutoencoderLinear.R')
 
 imageChannels <- 3
@@ -26,7 +26,7 @@ ZCAWhite <- sigma.svd$u %*% diag(1 / sqrt(sigma.svd$d + epsilon)) %*% t(sigma.sv
 patches <- ZCAWhite %*% patches
 
 theta <- initializeParameters(hiddenSize, visibleSize)
-
+#************************************************ With method ***************************************************************************************
 optTheta <- optim(theta,
 					function(theta) sparseAutoencoderLinearCost(theta, visibleSize, hiddenSize, lambda, sparsityParam, beta, patches),
 					function(theta) sparseAutoencoderLinearGrad(theta, visibleSize, hiddenSize, lambda, sparsityParam, beta, patches),
