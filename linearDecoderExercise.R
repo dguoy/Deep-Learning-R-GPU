@@ -1,6 +1,6 @@
 # Linear Decoders with Autoencoders
 source('common.R')
-source('deepLearning.R')
+source('deeplearning/sparseAutoencoderLinear.R')
 
 imageChannels <- 3
 
@@ -35,3 +35,6 @@ optTheta <- optim(theta,
 checkNumericalGradient(theta,
 						function(theta) sparseAutoencoderLinearCost(theta, visibleSize, hiddenSize, lambda, sparsityParam, beta, patches),
 						function(theta) sparseAutoencoderLinearGrad(theta, visibleSize, hiddenSize, lambda, sparsityParam, beta, patches))
+#************************************************ With Object-oriented ******************************************************************************
+sparseAutoencoderLinear <- SparseAutoencoderLinear$new(visibleSize, hiddenSize, lambda, sparsityParam, beta, patches)
+optimTheta <- optim(theta, sparseAutoencoderLinear$cost, sparseAutoencoderLinear$grad, method = "L-BFGS-B", control = list(trace = 3, maxit = 500))$par

@@ -16,7 +16,10 @@ theta <- initializeParameters(hiddenSize, visibleSize)
 optimTheta <- optim(theta,
 		function(theta) sparseAutoencoderCost(theta, visibleSize, hiddenSize, lambda, sparsityParam, beta, patches),
 		function(theta) sparseAutoencoderGrad(theta, visibleSize, hiddenSize, lambda, sparsityParam, beta, patches),
-		method = "L-BFGS-B", control = list(trace = 3, maxit = 2000))$par
+		method = "L-BFGS-B", control = list(trace = 3, maxit = 10))$par
 
 W <- matrix(optimTheta[1 : (hiddenSize*visibleSize)], hiddenSize, visibleSize)
 displayNetwork(W)
+#************************************************ With Object-oriented ******************************************************************************
+sparseAutoencoder <- SparseAutoencoder$new(visibleSize, hiddenSize, lambda, sparsityParam, beta, patches)
+optimTheta <- optim(theta, sparseAutoencoder$cost, sparseAutoencoder$grad, method = "L-BFGS-B", control = list(trace = 3, maxit = 2000))$par
