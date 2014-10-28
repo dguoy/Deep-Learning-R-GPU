@@ -1,7 +1,7 @@
 #Stacked Autoencoders
-source('common.R')
-source('deepLearning.R')
-source('softmax.R')
+source('deeplearning/common.R')
+source('deepLearning/stackedAE.R')
+source('deeplearning/softmax.R')
 
 inputSize <- 28 * 28
 numClasses <- 10
