@@ -1,7 +1,7 @@
 # Convolution and Pooling
 source('deeplearning/common.R')
-source('deepLearning.R')
-source('softmax.R')
+source('deepLearning/cnn.R')
+source('deeplearning/softmax.R')
 
 imageChannels <- 3
 

@@ -2,8 +2,8 @@
 source('deeplearning/common.R')
 source('deeplearning/sparseAutoencoderLinear.R')
 
+maxIter <- 500
 imageChannels <- 3
-
 patchDim <- 8
 numPatches <- 100000
 
@@ -30,11 +30,11 @@ theta <- initializeParameters(hiddenSize, visibleSize)
 optTheta <- optim(theta,
 					function(theta) sparseAutoencoderLinearCost(theta, visibleSize, hiddenSize, lambda, sparsityParam, beta, patches),
 					function(theta) sparseAutoencoderLinearGrad(theta, visibleSize, hiddenSize, lambda, sparsityParam, beta, patches),
-					method = "L-BFGS-B", control = list(trace = 3, maxit = 500))$par
+					method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
 
 checkNumericalGradient(theta,
 						function(theta) sparseAutoencoderLinearCost(theta, visibleSize, hiddenSize, lambda, sparsityParam, beta, patches),
 						function(theta) sparseAutoencoderLinearGrad(theta, visibleSize, hiddenSize, lambda, sparsityParam, beta, patches))
 #************************************************ With Object-oriented ******************************************************************************
 sparseAutoencoderLinear <- SparseAutoencoderLinear$new(visibleSize, hiddenSize, lambda, sparsityParam, beta, patches)
-optimTheta <- optim(theta, sparseAutoencoderLinear$cost, sparseAutoencoderLinear$grad, method = "L-BFGS-B", control = list(trace = 3, maxit = 500))$par
+optimTheta <- optim(theta, sparseAutoencoderLinear$cost, sparseAutoencoderLinear$grad, method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par

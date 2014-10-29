@@ -1,6 +1,8 @@
+# Softmax
 source('deeplearning/common.R')
 source('deeplearning/softmax.R')
 
+maxIter <- 500
 inputSize <- 28 * 28
 numClasses <- 10
 
@@ -15,7 +17,7 @@ theta <- 0.005 * runif(numClasses * inputSize)
 optimTheta <- optim(theta,
 		function(theta) softmaxCost(theta, numClasses, inputSize, lambda, trainData, trainLabels),
 		function(theta) softmaxGrad(theta, numClasses, inputSize, lambda, trainData, trainLabels),
-		method = "L-BFGS-B", control = list(trace = 3, maxit = 500))$par
+		method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
 
 testData <- loadImageFile('data/t10k-images-idx3-ubyte')
 testLabels <- loadLabelFile('data/t10k-labels-idx1-ubyte')
@@ -23,7 +25,7 @@ softmaxPredict(optimTheta, testData, testLabels)
 
 #************************************************ With Object-oriented ******************************************************************************
 softmax <- Softmax$new(numClasses, inputSize, lambda, trainData, trainLabels)
-optimTheta <- optim(theta, softmax$cost, softmax$grad, method = "L-BFGS-B", control = list(trace = 3, maxit = 500))$par
+optimTheta <- optim(theta, softmax$cost, softmax$grad, method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
 
 testData <- loadImageFile('data/t10k-images-idx3-ubyte')
 testLabels <- loadLabelFile('data/t10k-labels-idx1-ubyte')
