@@ -93,8 +93,8 @@ SparseAutoencoderLinear <- R6Class("SparseAutoencoderLinear",
 			private$rho <- rowSums(private$a2) / m
 
 			(1 /  (2 * m)) * sum((private$a3 - y)^2) +
-				(lambda / 2) * (sum(W1^2) + sum(W2^2)) +
-					beta * sum(sparsityParam * log(sparsityParam / private$rho) + (1 - sparsityParam) * log((1 - sparsityParam) / (1-private$rho)))
+				(private$lambda / 2) * (sum(W1^2) + sum(W2^2)) +
+			  private$beta * sum(private$sparsityParam * log(private$sparsityParam / private$rho) + (1 - private$sparsityParam) * log((1 - private$sparsityParam) / (1-private$rho)))
 		},
 		grad = function(theta) {
 			W1 = matrix(theta[1 : (private$hiddenSize*private$visibleSize)], private$hiddenSize, private$visibleSize)
@@ -105,7 +105,7 @@ SparseAutoencoderLinear <- R6Class("SparseAutoencoderLinear",
 			m <- ncol(private$data)
 			y <- private$data
 
-			sparsity_delta <- -sparsityParam / private$rho + (1-sparsityParam) / (1-private$rho)
+			sparsity_delta <- -private$sparsityParam / private$rho + (1-private$sparsityParam) / (1-private$rho)
 
 			delta3 <- -(y - a3)
 			delta2 <- (t(W2) %**% delta3 + private$beta * sparsity_delta) * private$a2 * (1 - private$a2)
