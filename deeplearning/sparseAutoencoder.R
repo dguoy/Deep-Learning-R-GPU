@@ -96,10 +96,10 @@ SparseAutoencoder <- R6Class("SparseAutoencoder",
 			  private$beta * sum(private$sparsityParam * log(private$sparsityParam / private$rho) + (1 - private$sparsityParam) * log((1 - private$sparsityParam) / (1-private$rho)))
 		},
 		grad = function(theta) {
-			W1 = matrix(theta[1 : (hiddenSize*visibleSize)], hiddenSize, visibleSize)
-			b1 = theta[(hiddenSize*visibleSize+1) : (hiddenSize*visibleSize+hiddenSize)]
-			W2 = matrix(theta[(hiddenSize*visibleSize+hiddenSize+1) : (2*hiddenSize*visibleSize+hiddenSize)], visibleSize, hiddenSize)
-			b2 = theta[(2*hiddenSize*visibleSize+hiddenSize+1) : length(theta)]
+		  W1 = matrix(theta[1 : (private$hiddenSize*private$visibleSize)], private$hiddenSize, private$visibleSize)
+		  b1 = theta[(private$hiddenSize*private$visibleSize+1) : (private$hiddenSize*private$visibleSize+private$hiddenSize)]
+		  W2 = matrix(theta[(private$hiddenSize*private$visibleSize+private$hiddenSize+1) : (2*private$hiddenSize*private$visibleSize+private$hiddenSize)], private$visibleSize, private$hiddenSize)
+		  b2 = theta[(2*private$hiddenSize*private$visibleSize+private$hiddenSize+1) : length(theta)]
 
 			m <- ncol(private$data)
 			y <- private$data
