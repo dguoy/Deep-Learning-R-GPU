@@ -107,7 +107,7 @@ SparseAutoencoderLinear <- R6Class("SparseAutoencoderLinear",
 
 			sparsity_delta <- -private$sparsityParam / private$rho + (1-private$sparsityParam) / (1-private$rho)
 
-			delta3 <- -(y - a3)
+			delta3 <- -(y - private$a3)
 			delta2 <- (t(W2) %**% delta3 + private$beta * sparsity_delta) * private$a2 * (1 - private$a2)
 
 			deltaW1 <- delta2 %**% t(private$data)
