@@ -1,11 +1,10 @@
 # Restricted Boltzmann Machines
-source('common.R')
-source('deepLearning.R')
-source('softmax.R')
+source('deeplearning/common.R')
+source('deeplearning/softmax.R')
 
-hiddenSize <- 200
+hiddenSize <- 500
 batchSize <- 100
-alpha <- 1
+alpha <- 0.1
 
 trainData <- loadImageFile('data/train-images-idx3-ubyte')
 
@@ -13,30 +12,33 @@ m <- ncol(trainData)
 inputSize <- nrow(trainData)
 numbatches <- m / batchSize
 
-r <- sqrt(6) / sqrt(hiddenSize+inputSize+1)
+r <- 4 * sqrt(6) / sqrt(hiddenSize+inputSize)
 W <- matrix(runif(hiddenSize * inputSize) * 2 * r - r, ncol = inputSize, nrow = hiddenSize)
 b <- rep(0, inputSize)
 c <- rep(0, hiddenSize)
 
-for(l in 1:20) {
-	kk <- sample(1:m)
-	err <- 0
-	for(i in 1:numbatches) {
-		v1 <- trainData[, kk[((i - 1)*batchSize+1) : (i*batchSize)]]
-		h1 <- sigmoidRnd(W %*% v1 + c)
-		v2 <- sigmoidRnd(t(W) %*% h1 + b)
-		h2 <- sigmoidRnd(W %*% v2 + c)
-		c1 <- h1 %*% t(v1)
-		c2 <- h2 %*% t(v2)
+for(l in 1:15) {
+  kk <- sample(1:m)
+  err <- 0
+  for(i in 1:numbatches) {
+    v <- trainData[, kk[((i - 1)*batchSize+1) : (i*batchSize)]]
+    h <- sigmoidRnd(W %*% v + c)
 
-		W <- W + (alpha / l) * (c1 - c2) / batchSize
-		b <- b + (alpha / l) * rowMeans(v1 - v2)
-		c <- c + (alpha / l) * rowMeans(h1 - h2)
-		err <- err + sum((v1 - v2)^2) / batchSize
-	}
-	print(sprintf("At iterate %s = %s", l, err))
+    gibbs_sample <- gibbs_hvh(h, k=1)
+    v_sample <- gibbs_sample$v_sample
+    h_sample <- gibbs_sample$h_sample
+
+    c1 <- h %*% t(v)
+    c2 <- h_sample %*% t(v_sample)
+
+    W <- W + alpha * (c1 - c2) / batchSize
+    b <- b + alpha * rowMeans(v - v_sample)
+    c <- c + alpha * rowMeans(h - h_sample)
+    err <- err + sum((v - v_sample)^2) / batchSize
+  }
+  print(sprintf("At iterate %s = %s", l, err / numbatches))
 }
-displayNetwork(W)
+displayNetwork(W[1:100, ])
 
 trainData <- loadImageFile('data/train-images-idx3-ubyte')
 trainLabels <- loadLabelFile('data/train-labels-idx1-ubyte')
@@ -56,3 +58,14 @@ softmaxOptTheta <- optim(softmaxTheta,
 
 softmaxPredict(softmaxOptTheta, testFeatures, testLabels)
 softmaxPredict(softmaxOptTheta, trainFeatures, trainLabels)
+
+#*********************************************************************
+gibbs_hvh <- function(h, k=1) {
+  v_sample <- sigmoidRnd(t(W) %*% h + b)
+  h_sample <- sigmoidRnd(W %*% v_sample + c)
+  if(k == 1) {
+    return(list('v_sample'=v_sample, 'h_sample'=h_sample))
+  } else {
+    return(gibbs_hvh(h_sample, k - 1))
+  }
+}
