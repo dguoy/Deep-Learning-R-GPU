@@ -61,7 +61,7 @@ W <- matrix(runif(hiddenSize * inputSize) * 2 * r - r, hiddenSize, inputSize)
 bhid <- rep(0, hiddenSize)
 bvis <- rep(0, inputSize)
 
-for(l in 1:10) {
+for(l in 1:15) {
   kk <- sample(1:m)
   cost <- 0
   for(i in 1:numbatches) {
@@ -78,11 +78,12 @@ for(l in 1:10) {
     a2Grad <- a2 * (1 - a2)
     a3GradLGrad <- a3Grad * LGrad
     Wa3GradLGrad <- W %*% a3GradLGrad
+    a2GradWa3GradLGrad <- a2Grad * Wa3GradLGrad
 
-    WGrad <- -(a2Grad * Wa3GradLGrad) %*% t(data) - a2 %*% t(a3GradLGrad)
+    WGrad <- -a2GradWa3GradLGrad %*% t(data) - a2 %*% t(a3GradLGrad)
     W <- W - alpha * WGrad / batchSize
 
-    bhidGrad <- -rowMeans(Wa3GradLGrad * a2Grad)
+    bhidGrad <- -rowMeans(a2GradWa3GradLGrad)
     bhid <- bhid - alpha * bhidGrad
 
     bvisGrad <- -rowMeans(a3GradLGrad)
@@ -93,6 +94,7 @@ for(l in 1:10) {
   }
   print(sprintf("At iterate %s = %s", l, cost / numbatches))
 }
+displayNetwork(W[1:100, ])
 
 trainData <- loadImageFile('data/train-images-idx3-ubyte')
 trainLabels <- loadLabelFile('data/train-labels-idx1-ubyte')
@@ -100,8 +102,8 @@ numLabels <- length(table(trainLabels))
 testData <- loadImageFile('data/t10k-images-idx3-ubyte')
 testLabels <- loadLabelFile('data/t10k-labels-idx1-ubyte')
 
-trainFeatures <- feedForwardAutoencoder(c(W, rep(0, hiddenSize)), hiddenSize, inputSize, trainData)
-testFeatures <- feedForwardAutoencoder(c(W, rep(0, hiddenSize)), hiddenSize, inputSize, testData)
+trainFeatures <- feedForwardAutoencoder(c(W, bhid), hiddenSize, inputSize, trainData)
+testFeatures <- feedForwardAutoencoder(c(W, bhid), hiddenSize, inputSize, testData)
 
 softmaxLambda <- 1e-4
 softmaxTheta <- 0.005 * runif(numLabels * hiddenSize)
