@@ -43,3 +43,87 @@ cnnPool <- function(poolDim, convolvedFeatures) {
 	}
 	pooledFeatures
 }
+#************************************************ With Object-oriented *******************************************************************************
+PoolLayer <- R6Class("PoolLayer",
+  private = list(
+    input = NA,
+    poolSize = NA,
+    activation = NA
+  ),
+  public = list(
+    initialize = function(input, poolSize, activation = max) {
+      private$input <- input
+      private$poolSize <- poolSize
+      private$activation <- activation
+    },
+    output = function() {
+      inputHeight <- dim(private$input)[1]
+      inputWeight <- dim(private$input)[2]
+      inputFeatures <- dim(private$input)[3]
+      numImages <- dim(private$input)[4]
+
+      poolHeight <- private$poolSize[1]
+      poolWeight <- private$poolSize[2]
+      pooledHeight <- inputHeight / poolHeight
+      pooledWeight <- inputWeight / poolWeight
+
+      pooledFeatures <- array(0, c(pooledHeight, pooledWeight, inputFeatures, numImages))
+      for(i in 1:numImages) {
+        for(r in 1:pooledHeight) {
+          for(c in 1:pooledWeight) {
+            rb <- 1 + poolHeight * (r-1)
+            re <- poolHeight * r
+            cb <- 1 + poolWeight * (c-1)
+            ce <- poolWeight * c
+            pooledFeatures[r, c, , i] <-
+              apply(matrix(private$input[rb:re, cb:ce, ,i], poolHeight * poolWeight, inputFeatures), MARGIN = 2, FUN = private$activation)
+          }
+        }
+      }
+      return (pooledFeatures)
+    }
+  )
+)
+
+LeNetConvLayer <- R6Class("LeNetConvLayer",
+  private = list(
+  　input = NA,
+  　filterShape = NA,
+  　W = NA,
+  　b = NA
+  ),
+  public = list(
+   initialize = function(input, filterShape, W, b) {
+     private$input <- input
+     private$filterShape <- filterShape
+     private$W <- W
+     private$b <- b
+   },
+   output = function() {
+     imageHeight <- dim(private$input)[1]
+     imageWeight <- dim(private$input)[2]
+     imageChannels <- dim(private$input)[3]
+     numImages <- dim(private$input)[4]
+
+     filterHeight <- private$filterShape[1]
+     filterWeight <- private$filterShape[2]
+     filterFeatures <- private$filterShape[3]
+
+     convolvedHeight <- imageHeight - filterHeight + 1
+     convolvedWeight <- imageWeight - filterWeight + 1
+
+     convolvedFeatures <- array(0, c(convolvedHeight, convolvedWeight, filterFeatures, numImages))
+
+     for(i in 1:numImages) {
+       for(r in 1:convolvedHeight) {
+         for(c in 1:convolvedWeight) {
+           convolvedFeatures[r, c, , i] <-
+             sigmoid(private$W %*% as.vector(private$input[r:(r+filterHeight-1), c:(c+filterWeight-1), ,i]) + private$b)
+         }
+       }
+     }
+
+     return (convolvedFeatures)
+   }
+  )
+)
