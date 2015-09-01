@@ -36,8 +36,7 @@ cnnPool <- function(poolDim, convolvedFeatures) {
 				re <- poolDim * r
 				cb <- 1 + poolDim * (c-1)
 				ce <- poolDim * c
-				pooledFeatures[r, c, , i] <-
-						colMeans(matrix(convolvedFeatures[rb:re, cb:ce, ,i], convolvedDim * convolvedDim, numFeatures))
+				pooledFeatures[r, c, , i] <- apply(matrix(convolvedFeatures[rb:re, cb:ce, ,i], poolDim * poolDim, numFeatures), MARGIN = 2, FUN = max)
 			}
 		}
 	}
@@ -59,7 +58,7 @@ PoolLayer <- R6Class("PoolLayer",
     output = function() {
       inputHeight <- dim(private$input)[1]
       inputWeight <- dim(private$input)[2]
-      inputFeatures <- dim(private$input)[3]
+      numFeatures <- dim(private$input)[3]
       numImages <- dim(private$input)[4]
 
       poolHeight <- private$poolSize[1]
@@ -67,7 +66,7 @@ PoolLayer <- R6Class("PoolLayer",
       pooledHeight <- inputHeight / poolHeight
       pooledWeight <- inputWeight / poolWeight
 
-      pooledFeatures <- array(0, c(pooledHeight, pooledWeight, inputFeatures, numImages))
+      pooledFeatures <- array(0, c(pooledHeight, pooledWeight, numFeatures, numImages))
       for(i in 1:numImages) {
         for(r in 1:pooledHeight) {
           for(c in 1:pooledWeight) {
@@ -75,8 +74,7 @@ PoolLayer <- R6Class("PoolLayer",
             re <- poolHeight * r
             cb <- 1 + poolWeight * (c-1)
             ce <- poolWeight * c
-            pooledFeatures[r, c, , i] <-
-              apply(matrix(private$input[rb:re, cb:ce, ,i], poolHeight * poolWeight, inputFeatures), MARGIN = 2, FUN = private$activation)
+            pooledFeatures[r, c, , i] <- apply(matrix(private$input[rb:re, cb:ce, ,i], poolHeight * poolWeight, numFeatures), MARGIN = 2, FUN = private$activation)
           }
         }
       }
@@ -114,12 +112,10 @@ LeNetConvLayer <- R6Class("LeNetConvLayer",
 
      convolvedFeatures <- array(0, c(convolvedHeight, convolvedWeight, filterFeatures, numImages))
 
-     for(i in 1:numImages) {
-       for(r in 1:convolvedHeight) {
-         for(c in 1:convolvedWeight) {
-           convolvedFeatures[r, c, , i] <-
-             sigmoid(private$W %*% as.vector(private$input[r:(r+filterHeight-1), c:(c+filterWeight-1), ,i]) + private$b)
-         }
+     for(r in 1:convolvedHeight) {
+       for(c in 1:convolvedWeight) {
+         convolvedFeatures[r, c, , ] <-
+           sigmoid(private$W %*% matrix(private$input[r:(r+filterHeight-1), c:(c+filterWeight-1), , ], ncol = numImages) + private$b)
        }
      }
 
