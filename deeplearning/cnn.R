@@ -50,7 +50,7 @@ PoolLayer <- R6Class("PoolLayer",
     activation = NA
   ),
   public = list(
-    initialize = function(input, poolSize, activation = max) {
+    initialize = function(input, poolSize, activation = 'max') {
       private$input <- input
       private$poolSize <- poolSize
       private$activation <- activation
@@ -74,11 +74,43 @@ PoolLayer <- R6Class("PoolLayer",
             re <- poolHeight * r
             cb <- 1 + poolWeight * (c-1)
             ce <- poolWeight * c
-            pooledFeatures[r, c, , i] <- apply(matrix(private$input[rb:re, cb:ce, ,i], poolHeight * poolWeight, numFeatures), MARGIN = 2, FUN = private$activation)
+            pooledFeatures[r, c, , i] <- apply(matrix(private$input[rb:re, cb:ce, ,i], poolHeight * poolWeight, numFeatures), MARGIN = 2, FUN = ifelse(private$activation == 'max', max, mean))
           }
         }
       }
       return (pooledFeatures)
+    },
+    getDelta = function(delta) {
+      pooledHeight <- dim(delta)[1]
+      pooledWeight <- dim(delta)[2]
+      numFeatures <- dim(delta)[3]
+      numImages <- dim(delta)[4]
+
+      poolHeight <- private$poolSize[1]
+      poolWeight <- private$poolSize[2]
+
+      currentDelta <- array(0, c(pooledHeight * poolHeight, pooledWeight * poolWeight, numFeatures, numImages))
+      if(private$activation == 'max') {
+        for(i in 1:numImages) {
+          for(r in 1:pooledHeight) {
+            for(c in 1:pooledWeight) {
+              rb <- 1 + poolHeight * (r-1)
+              re <- poolHeight * r
+              cb <- 1 + poolWeight * (c-1)
+              ce <- poolWeight * c
+              idx <- apply(matrix(private$input[rb:re, cb:ce, ,i], poolHeight * poolWeight, numFeatures), MARGIN = 2, FUN = which.max) + (0:(numFeatures - 1) * 4)
+              currentDelta[rb:re, cb:ce, , i][idx] <- delta[r, c, , i]
+            }
+          }
+        }
+      } else {
+        for(i in 1:numImages) {
+          for(f in 1:numFeatures) {
+            currentDelta[, , f, i] <- kronecker(delta[, , f, i], matrix(1 / (poolHeight * poolWeight), pooledHeight, pooledWeight))
+          }
+        }
+      }
+      return (currentDelta)
     }
   )
 )
@@ -91,11 +123,23 @@ LeNetConvLayer <- R6Class("LeNetConvLayer",
   　b = NA
   ),
   public = list(
-   initialize = function(input, filterShape, W, b) {
+   initialize = function(input, filterShape, W = NA, b = NA) {
      private$input <- input
      private$filterShape <- filterShape
-     private$W <- W
-     private$b <- b
+     if(is.na(W)) {
+       hiddenSize <- filterShape[3]
+       inputSize <- filterShape[1] * filterShape[2] * dim(input)[3]
+       r <- 4 * sqrt(6) / sqrt(hiddenSize+inputSize)
+       private$W <- matrix(runif(hiddenSize * inputSize) * 2 * r - r, hiddenSize, inputSize)
+     } else {
+      private$W <- W
+     }
+     print(dim(private$W))
+     if(is.na(b)) {
+       private$b <- rep(0, filterShape[3])
+     } else {
+       private$b <- b
+     }
    },
    output = function() {
      imageHeight <- dim(private$input)[1]
@@ -120,6 +164,25 @@ LeNetConvLayer <- R6Class("LeNetConvLayer",
      }
 
      return (convolvedFeatures)
+   },
+   grad = function(delta) {
+     convolvedHeight <- dim(delta)[1]
+     convolvedWeight <- dim(delta)[2]
+     numFeatures <- dim(delta)[3]
+     numImages <- dim(delta)[4]
+     
+     filterHeight <- private$filterShape[1]
+     filterWeight <- private$filterShape[2]
+     filterFeatures <- private$filterShape[3]
+     
+     gradW <- matrix(0, filterFeatures, filterHeight * filterWeight * numFeatures)
+     for(r in 1:convolvedHeight) {
+       for(c in 1:convolvedWeight) {
+         gradW <- gradW +
+           delta[r, c, , ] %*%
+           matrix(private$input[r:(r+filterHeight-1), c:(c+filterWeight-1), , ], nrow = numImages, byrow = T)
+       }
+     }
    }
   )
 )
