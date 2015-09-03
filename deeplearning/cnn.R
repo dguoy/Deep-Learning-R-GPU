@@ -119,14 +119,15 @@ LeNetConvLayer <- R6Class("LeNetConvLayer",
   private = list(
   　input = NA,
   　filterShape = NA,
+  　convolvedFeatures = NA,
   　W = NA,
   　b = NA
   ),
   public = list(
-   initialize = function(input, filterShape, W = NA, b = NA) {
+   initialize = function(input, filterShape, W = NULL, b = NULL) {
      private$input <- input
      private$filterShape <- filterShape
-     if(is.na(W)) {
+     if(is.null(W)) {
        hiddenSize <- filterShape[3]
        inputSize <- filterShape[1] * filterShape[2] * dim(input)[3]
        r <- 4 * sqrt(6) / sqrt(hiddenSize+inputSize)
@@ -134,55 +135,65 @@ LeNetConvLayer <- R6Class("LeNetConvLayer",
      } else {
       private$W <- W
      }
-     print(dim(private$W))
-     if(is.na(b)) {
+     if(is.null(b)) {
        private$b <- rep(0, filterShape[3])
      } else {
        private$b <- b
      }
    },
    output = function() {
-     imageHeight <- dim(private$input)[1]
-     imageWeight <- dim(private$input)[2]
-     imageChannels <- dim(private$input)[3]
-     numImages <- dim(private$input)[4]
-
-     filterHeight <- private$filterShape[1]
-     filterWeight <- private$filterShape[2]
-     filterFeatures <- private$filterShape[3]
-
-     convolvedHeight <- imageHeight - filterHeight + 1
-     convolvedWeight <- imageWeight - filterWeight + 1
-
-     convolvedFeatures <- array(0, c(convolvedHeight, convolvedWeight, filterFeatures, numImages))
-
-     for(r in 1:convolvedHeight) {
-       for(c in 1:convolvedWeight) {
-         convolvedFeatures[r, c, , ] <-
-           sigmoid(private$W %*% matrix(private$input[r:(r+filterHeight-1), c:(c+filterWeight-1), , ], ncol = numImages) + private$b)
+     if(is.na(private$convolvedFeatures)) {
+       imageHeight <- dim(private$input)[1]
+       imageWeight <- dim(private$input)[2]
+       imageChannels <- dim(private$input)[3]
+       numImages <- dim(private$input)[4]
+  
+       filterHeight <- private$filterShape[1]
+       filterWeight <- private$filterShape[2]
+       filterFeatures <- private$filterShape[3]
+  
+       convolvedHeight <- imageHeight - filterHeight + 1
+       convolvedWeight <- imageWeight - filterWeight + 1
+  
+       private$convolvedFeatures <- array(0, c(convolvedHeight, convolvedWeight, filterFeatures, numImages))
+  
+       for(r in 1:convolvedHeight) {
+         for(c in 1:convolvedWeight) {
+           private$convolvedFeatures[r, c, , ] <-
+             sigmoid(private$W %*% matrix(private$input[r:(r+filterHeight-1), c:(c+filterWeight-1), , ], ncol = numImages) + private$b)
+         }
        }
      }
 
-     return (convolvedFeatures)
+     return (private$convolvedFeatures)
    },
    grad = function(delta) {
+     delta <- delta * private$convolvedFeatures * (1 - private$convolvedFeatures)
+
      convolvedHeight <- dim(delta)[1]
      convolvedWeight <- dim(delta)[2]
-     numFeatures <- dim(delta)[3]
+     numFeatures <- dim(private$input)[3]
      numImages <- dim(delta)[4]
-     
+
      filterHeight <- private$filterShape[1]
      filterWeight <- private$filterShape[2]
      filterFeatures <- private$filterShape[3]
-     
+
      gradW <- matrix(0, filterFeatures, filterHeight * filterWeight * numFeatures)
+     gradb <- rep(0, filterFeatures)
+     gradInput <- array(0, dim(private$input))
      for(r in 1:convolvedHeight) {
        for(c in 1:convolvedWeight) {
          gradW <- gradW +
            delta[r, c, , ] %*%
            matrix(private$input[r:(r+filterHeight-1), c:(c+filterWeight-1), , ], nrow = numImages, byrow = T)
+         gradb <- gradb + rowSums(delta[r, c, , ])
+         gradInput[r:(r+filterHeight-1), c:(c+filterWeight-1), , ] <- gradInput[r:(r+filterHeight-1), c:(c+filterWeight-1), , ] +
+           array(t(W) %*% delta[r, c, , ], c(filterHeight, filterWeight, numFeatures, numImages))
        }
      }
+
+     return (list('W' = gradW, 'b' = gradb, delta = gradInput))
    }
   )
 )
