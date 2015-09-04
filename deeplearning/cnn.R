@@ -197,3 +197,55 @@ LeNetConvLayer <- R6Class("LeNetConvLayer",
    }
   )
 )
+
+Softmax <- R6Class("Softmax",
+  private = list(
+   numClasses=NA,
+   inputSize=NA,
+   lambda=NA,
+   data=NA,
+   labels=NA,
+   numCases=NA,
+   groundTruth=NA,
+   M=NA,
+   p=NA
+  ),
+  public = list(
+   initialize = function(numClasses, inputSize, lambda, data, labels) {
+     private$numClasses <- numClasses
+     private$inputSize <- inputSize
+     private$lambda <- lambda
+     private$data <- data
+     private$labels <- labels
+   },
+   cost = function(theta) {
+     W = matrix(theta[1 : (private$numClasses * private$inputSize)], private$numClasses, private$inputSize)
+     b = theta[(private$numClasses * private$inputSize + 1) : length(theta)]
+
+     private$numCases <- ncol(private$data)
+
+     private$groundTruth <- matrix(0, private$numClasses, private$numCases)
+     for(i in 1:length(private$labels)) {
+       private$groundTruth[private$labels[i], i] <- 1
+     }
+
+     private$M <- W %*% private$data + b
+     private$p <- apply(private$M, 2, function(x) {y <- x - max(x); return(exp(y) / sum(exp(y)))})
+     cost <- -(1 / private$numCases) * sum(private$groundTruth * log(private$p)) + (private$lambda / 2) * sum(W^2)
+     return(cost)
+   },
+   grad = function(theta) {
+     W = matrix(theta[1 : (private$numClasses * private$inputSize)], private$numClasses, private$inputSize)
+     b = theta[(private$numClasses * private$inputSize + 1) : length(theta)]
+     gradW <- -(1 / private$numCases) * (private$groundTruth - private$p) %*% t(private$data) + private$lambda * W
+     gradb <- -(1 / private$numCases) * rowSums(private$groundTruth - private$p)
+     return(c(gradW, gradb))
+   },
+   predict = function(theta, data, labels) {
+     W = matrix(theta[1 : (private$numClasses * private$inputSize)], private$numClasses, private$inputSize)
+     b = theta[(private$numClasses * private$inputSize + 1) : length(theta)]
+     predict <- apply(W %*% data + b, 2, function(x) which.max(x))
+     sum(predict == labels) / length(labels)
+   }
+  )
+)
