@@ -204,52 +204,55 @@ HiddenLayer <- R6Class("HiddenLayer",
 
 Softmax <- R6Class("Softmax",
   private = list(
-    numClasses = NA,
-    inputSize = NA,
     lambda = NA,
-    data = NA,
-    labels = NA,
-    numCases = NA,
     groundTruth = NA,
-    M = NA,
     p = NA
   ),
   public = list(
-    initialize = function(numClasses, inputSize, lambda, data, labels) {
-      private$numClasses <- numClasses
-      private$inputSize <- inputSize
-      private$lambda <- lambda
-      private$data <- data
-      private$labels <- labels
-    },
-    cost = function(theta) {
-      W = matrix(theta[1 : (private$numClasses * private$inputSize)], private$numClasses, private$inputSize)
-      b = theta[(private$numClasses * private$inputSize + 1) : length(theta)]
-
-      private$numCases <- ncol(private$data)
-
-      private$groundTruth <- matrix(0, private$numClasses, private$numCases)
-      for(i in 1:length(private$labels)) {
-        private$groundTruth[private$labels[i], i] <- 1
+    input = NA,
+    y = NA,
+    inputSize = NA,
+    outputSize = NA,
+    W = NA,
+    b = NA,
+    initialize = function(input, y, inputSize, outputSize, W, b, lambda = 0) {
+      self$input <- input
+      self$y <- y
+      self$inputSize <- inputSize
+      self$outputSize <- outputSize
+      if (missing(W)) {
+        self$W <- matrix(0.005 * runif(outputSize * inputSize), outputSize, inputSize)
+      } else {
+        self$W <- W
       }
+      if (missing(b)) {
+        self$b <- rep(0, outputSize)
+      } else {
+        self$b <- b
+      }
+      private$lambda <- lambda
 
-      private$M <- W %*% private$data + b
-      private$p <- apply(private$M, 2, function(x) {y <- x - max(x); return(exp(y) / sum(exp(y)))})
-      cost <- -(1 / private$numCases) * sum(private$groundTruth * log(private$p)) + (private$lambda / 2) * sum(W^2)
-      return(cost)
+      private$groundTruth <- matrix(0, outputSize, length(y))
+      for(i in 1:length(y)) {
+        private$groundTruth[y[i], i] <- 1
+      }
     },
-    grad = function(theta) {
-      W = matrix(theta[1 : (private$numClasses * private$inputSize)], private$numClasses, private$inputSize)
-      b = theta[(private$numClasses * private$inputSize + 1) : length(theta)]
-      gradW <- -(1 / private$numCases) * (private$groundTruth - private$p) %*% t(private$data) + private$lambda * W
-      gradb <- -(1 / private$numCases) * rowSums(private$groundTruth - private$p)
-      return(c(gradW, gradb))
+    cost = function() {
+      private$p <- apply(self$W %*% self$input + self$b, 2, function(x) {y <- x - max(x); return(exp(y) / sum(exp(y)))})
+      cost <- -(1 / length(self$y)) * sum(private$groundTruth * log(private$p)) + (private$lambda / 2) * sum(self$W^2)
+      return (cost)
     },
-    predict = function(theta, data, labels) {
-      W = matrix(theta[1 : (private$numClasses * private$inputSize)], private$numClasses, private$inputSize)
-      b = theta[(private$numClasses * private$inputSize + 1) : length(theta)]
-      predict <- apply(W %*% data + b, 2, function(x) which.max(x))
-      sum(predict == labels) / length(labels)
+    grad = function() {
+      gradW <- -(1 / length(self$y)) * (private$groundTruth - private$p) %*% t(self$input) + private$lambda * self$W
+      gradb <- -rowMeans(private$groundTruth - private$p)
+      delta <- -(1 / length(self$y)) * t(self$W) %*% (private$groundTruth - private$p)
+      return (list('W' = gradW, 'b' = gradb, 'delta' = delta))
+    },
+    output = function (input) {
+      return (apply(self$W %*% input + self$b, 2, function(x) which.max(x)))
+    },
+    error = function(input, y) {
+      return (mean(self$output(input) != y))
     }
   )
 )
