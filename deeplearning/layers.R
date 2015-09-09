@@ -155,49 +155,50 @@ LeNetConvLayer <- R6Class("LeNetConvLayer",
 
 HiddenLayer <- R6Class("HiddenLayer",
   private = list(
+    activation = NA
+  ),
+  public = list(
     input = NA,
     inputSize = NA,
     outputSize = NA,
     W = NA,
     b = NA,
-    activation = NA,
-    layerOutput = NA
-  ),
-  public = list(
-    initialize = function(input, inputSize, outputSize, W = NULL, b = NULL, activation = sigmoid) {
-      private$input <- input
-      private$inputSize <- inputSize
-      private$outputSize <- outputSize
-      if(is.null(W)) {
+    ouput = NA,
+    initialize = function(input, inputSize, outputSize, W, b, activation = sigmoid) {
+      self$input <- input
+      self$inputSize <- inputSize
+      self$outputSize <- outputSize
+      if(missing(W)) {
         r <- 4 * sqrt(6) / sqrt(inputSize + outputSize)
-        private$W <- matrix(runif(inputSize * outputSize) * 2 * r - r, outputSize, inputSize)
+        self$W <- matrix(runif(inputSize * outputSize) * 2 * r - r, outputSize, inputSize)
       } else {
-        private$W <- W
+        self$W <- W
       }
-      if(is.null(b)) {
-        private$b <- rep(0, outputSize)
+      if(missing(b)) {
+        self$b <- rep(0, outputSize)
       } else {
-        private$b <- b
+        self$b <- b
       }
       private$activation <- activation
     },
-    output = function() {
+    output = function(input) {
+      if(!missing(input)) self$input <- input
       linearOutput <- private$W %*% private$input + private$b
       if(is.null(private$activation)) {
-        private$layerOutput <- linearOutput
+        self$output <- linearOutput
       } else {
-        private$layerOutput <- private$activation(linearOutput)
+        self$output <- private$activation(linearOutput)
       }
-      return (private$layerOutput)
+      return (self$output)
     },
-    grad = function(delta) {
+    grad = function(nextLayerDelta) {
       if(!is.null(private$activation)) {
-        delta <- delta * private$layerOutput * (1 - private$layerOutput)
+        nextLayerDelta <- nextLayerDelta * private$output * (1 - private$output)
       }
-      gradW <- delta %*% t(private$input)
-      gradb <- rowSums(delta)
-      gradInput <- t(W) %*% delta
-      return (list('W' = gradW, 'b' = gradb, delta = gradInput))
+      gradW <- nextLayerDelta %*% t(self$input)
+      gradb <- rowSums(nextLayerDelta)
+      delta <- t(W) %*% nextLayerDelta
+      return (list('W' = gradW, 'b' = gradb, 'delta' = delta))
     }
   )
 )
@@ -248,12 +249,88 @@ Softmax <- R6Class("Softmax",
       delta <- -(1 / length(self$y)) * t(self$W) %*% (private$groundTruth - private$p)
       return (list('W' = gradW, 'b' = gradb, 'delta' = delta))
     },
-    output = function (input) {
-      return (apply(self$W %*% input + self$b, 2, function(x) which.max(x)))
+    train = function() {
+      optimTheta <- optim(self$theta,
+              function(theta) {self$theta <- theta; self$cost()},
+              function(theta) {grad <- self$grad(); c(grad$W, grad$b)},
+              method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
     },
-    error = function(input, y) {
+    output = function (input) {
+      if(!missing(input)) self$input <- input
+      return (apply(self$W %*% self$input + self$b, 2, function(x) which.max(x)))
+    },
+    errors = function(input, y) {
       return (mean(self$output(input) != y))
+    }
+  ),
+  active = list(
+    theta = function(theta) {
+      if (missing(theta)) {
+        return (c(self$W, self$b))
+      } else {
+        self$W <- matrix(theta[1 : (self$outputSize * self$inputSize)], self$outputSize, self$inputSize)
+        self$b <- tail(theta, self$outputSize)
+      }
     }
   )
 )
 
+SparseAutoencoder <- R6Class("SparseAutoencoder",
+  private = list(
+    input = NA,
+	inputSize = NA,
+    hiddenSize = NA,
+    lambda = NA,
+    sparsityParam = NA,
+    beta = NA,
+    layer1 = NA,
+    layer2 = NA,
+    rho = NA
+  ),
+  public = list(
+    initialize = function(input, inputSize, hiddenSize, lambda, sparsityParam, beta) {
+      private$input <- input
+      private$inputSize <- inputSize
+      private$lambda <- lambda
+      private$sparsityParam <- sparsityParam
+      private$beta <- beta
+      layer1 <- HiddenLayer$new(input, inputSize, hiddenSize)
+      layer2 <- HiddenLayer$new(layer1$output(), hiddenSize, inputSize)
+    },
+    cost = function(theta) {
+      layer1$W = matrix(theta[1 : (private$hiddenSize*private$inputSize)], private$hiddenSize, private$inputSize)
+      layer1$b = theta[(private$hiddenSize*private$inputSize+1) : (private$hiddenSize*private$inputSize+private$hiddenSize)]
+      layer2$W = matrix(theta[(private$hiddenSize*private$inputSize+private$hiddenSize+1) : (2*private$hiddenSize*private$inputSize+private$hiddenSize)], private$inputSize, private$hiddenSize)
+      layer2$b = theta[(2*private$hiddenSize*private$inputSize+private$hiddenSize+1) : length(theta)]
+
+	  m <- ncol(private$input)
+
+      a2 <- layer1$output()
+      a3 <- layer2$output(a2)
+
+      private$rho <- rowSums(a2) / m
+
+      (1 /  (2 * m)) * sum((a3 - y)^2) +
+          (private$lambda / 2) * (sum(private$lyaer2$W^2) + sum(private$lyaer3$W^2)) +
+          private$beta * sum(private$sparsityParam * log(private$sparsityParam / private$rho) + (1 - private$sparsityParam) * log((1 - private$sparsityParam) / (1-private$rho)))
+    },
+    grad = function(theta) {
+      m <- ncol(private$input)
+
+      a2 <- layer1$output
+      a3 <- layer2$output
+	  
+      sparsity_delta <- -private$sparsityParam / private$rho + (1-private$sparsityParam) / (1-private$rho)
+
+      gradLayer2 <- layer2$grad(a3 - private$input)
+      gradLayer1 <- layer1$grad(gradLayer2$delta + private$beta * sparsity_delta)
+
+      W1grad <- (1 / m) * gradLayer1$W + private$lambda * layer1$W
+      b1grad <- (1 / m) * gradLayer1$b
+      W2grad <- (1 / m) * gradLayer2$W + private$lambda * layer2$W
+      b2grad <- (1 / m) * gradLayer2$b
+      
+      c(as.vector(W1grad), as.vector(b1grad), as.vector(W2grad), as.vector(b2grad))
+    }
+  )
+)
