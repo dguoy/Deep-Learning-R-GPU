@@ -37,4 +37,4 @@ checkNumericalGradient(theta,
 						function(theta) sparseAutoencoderLinearGrad(theta, visibleSize, hiddenSize, lambda, sparsityParam, beta, patches))
 #************************************************ With Object-oriented ******************************************************************************
 sparseAutoencoderLinear <- SparseAutoencoderLinear$new(visibleSize, hiddenSize, lambda, sparsityParam, beta, patches)
-optimTheta <- optim(theta, sparseAutoencoderLinear$cost, sparseAutoencoderLinear$grad, method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
+optTheta <- optim(theta, sparseAutoencoderLinear$cost, sparseAutoencoderLinear$grad, method = "L-BFGS-B", control = list(trace = 3, maxit = maxIter))$par
